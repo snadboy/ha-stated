@@ -1,0 +1,107 @@
+set:
+  name: Set variable
+  description: Create or update a runtime variable (upsert)
+  fields:
+    name:
+      name: Name
+      required: true
+      example: "my_flag"
+      selector:
+        text:
+    value:
+      name: Value
+      required: false
+      default: ""
+      selector:
+        text:
+    var_type:
+      name: Type
+      required: false
+      default: "string"
+      selector:
+        select:
+          options:
+            - label: Boolean
+              value: boolean
+            - label: Number
+              value: number
+            - label: String
+              value: string
+    ttl:
+      name: TTL (seconds)
+      description: Auto-expire after this many seconds
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: seconds
+    expire_to:
+      name: Expire to
+      description: Value to set when TTL expires (defaults to type-appropriate zero value)
+      required: false
+      selector:
+        text:
+    icon:
+      name: Icon
+      required: false
+      selector:
+        icon:
+    attributes:
+      name: Attributes
+      description: Extra attributes to store on the entity
+      required: false
+      selector:
+        object:
+
+delete:
+  name: Delete variable
+  description: Remove a runtime variable and its entity
+  fields:
+    name:
+      name: Name
+      required: true
+      example: "my_flag"
+      selector:
+        text:
+
+set_value:
+  name: Set value
+  description: Set the value of an existing variable
+  target:
+    entity:
+      domain: stated
+  fields:
+    value:
+      name: Value
+      required: true
+      selector:
+        text:
+    ttl:
+      name: TTL (seconds)
+      description: Auto-expire after this many seconds
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: seconds
+    expire_to:
+      name: Expire to
+      description: Value to set when TTL expires
+      required: false
+      selector:
+        text:
+    attributes:
+      name: Attributes
+      description: Extra attributes to merge into the entity
+      required: false
+      selector:
+        object:
+
+toggle:
+  name: Toggle
+  description: Toggle a boolean variable between on and off
+  target:
+    entity:
+      domain: stated
