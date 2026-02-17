@@ -393,8 +393,7 @@ class Variable(collection.CollectionEntity, RestoreEntity):
         self._value = not self._value
         self.async_write_ha_state()
 
-    @callback
-    def async_update_config(self, config: dict[str, Any]) -> None:
+    async def async_update_config(self, config: dict[str, Any]) -> None:
         """Handle updated config from the collection."""
         self._config = config
         self._var_type = config.get(CONF_VAR_TYPE, DEFAULT_TYPE)
