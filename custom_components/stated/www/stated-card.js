@@ -4,7 +4,7 @@
  * Shows all stated.* entities with inline editing, toggle, delete, and create.
  */
 
-const CARD_VERSION = "1.1.0";
+const CARD_VERSION = "1.1.1";
 
 class StatedVariablesCard extends HTMLElement {
   constructor() {
@@ -22,6 +22,7 @@ class StatedVariablesCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._showCreate || this._editingEntity) return;
     this._render();
   }
 
@@ -419,7 +420,10 @@ class StatedVariablesCard extends HTMLElement {
       const slug = this._editingEntity.replace("stated.", "");
       const input = this.shadowRoot.querySelector(`#edit-${slug}`);
       if (input) {
-        input.focus();
+        input.addEventListener("mousedown", (ev) => ev.stopPropagation());
+        input.addEventListener("focusin", (ev) => ev.stopPropagation());
+        input.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+        setTimeout(() => input.focus(), 0);
         input.addEventListener("keydown", (ev) => {
           if (ev.key === "Enter") this._saveEdit(this._editingEntity);
           if (ev.key === "Escape") {
@@ -438,8 +442,17 @@ class StatedVariablesCard extends HTMLElement {
       const nameInput = this.shadowRoot.querySelector("#new-name");
       const valueInput = this.shadowRoot.querySelector("#new-value");
       const typeSelect = this.shadowRoot.querySelector("#new-type");
+
+      // Prevent HA card wrapper from stealing focus
+      const stopFocusTheft = (el) => {
+        el.addEventListener("mousedown", (ev) => ev.stopPropagation());
+        el.addEventListener("focusin", (ev) => ev.stopPropagation());
+        el.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+      };
+
       if (nameInput) {
-        nameInput.focus();
+        stopFocusTheft(nameInput);
+        setTimeout(() => nameInput.focus(), 0);
         nameInput.addEventListener("input", (ev) => {
           this._newName = ev.target.value;
         });
@@ -452,6 +465,7 @@ class StatedVariablesCard extends HTMLElement {
         });
       }
       if (valueInput) {
+        stopFocusTheft(valueInput);
         valueInput.addEventListener("input", (ev) => {
           this._newValue = ev.target.value;
         });
@@ -460,6 +474,7 @@ class StatedVariablesCard extends HTMLElement {
         });
       }
       if (typeSelect) {
+        stopFocusTheft(typeSelect);
         typeSelect.addEventListener("change", (ev) => {
           this._newType = ev.target.value;
         });

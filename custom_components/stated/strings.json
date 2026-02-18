@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Runtime Variables",
+        "title": "Stated",
         "description": "This integration provides runtime variables that can be created, updated, and deleted from automations and scripts."
       }
     }
