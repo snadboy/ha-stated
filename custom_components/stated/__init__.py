@@ -509,26 +509,15 @@ class Variable(collection.CollectionEntity, RestoreEntity):
         self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
-        """Restore state on startup."""
+        """Entity added to HA — value already loaded from storage collection."""
         await super().async_added_to_hass()
-
-        last_state = await self.async_get_last_state()
-        if last_state is None:
-            return
-
-        # Restore value from last known state
-        if last_state.state not in (None, "unknown", "unavailable"):
-            self._value = self._coerce(last_state.state)
-
-        # Restore custom attributes (exclude var_type and expires_at)
-        if last_state.attributes:
-            restored_attrs = {
-                k: v
-                for k, v in last_state.attributes.items()
-                if k not in ("var_type", "expires_at", "friendly_name", "icon")
-            }
-            if restored_attrs:
-                self._attributes.update(restored_attrs)
+        # Intentionally skip recorder state restoration.
+        # The DictStorageCollection persists and reloads the config (including value)
+        # on HA restart, so RestoreEntity restoration is not needed.
+        # Restoring from the recorder would overwrite a freshly-set value from
+        # stated.set (e.g., when creating a new entity with value="on", the recorder
+        # might have the previous expired "off" state, causing a race condition in
+        # automations that check the state immediately after calling stated.set).
 
     async def async_will_remove_from_hass(self) -> None:
         """Clean up TTL on removal."""
