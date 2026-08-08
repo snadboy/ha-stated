@@ -161,7 +161,11 @@ def _register_services(
         slug = slugify(name)
 
         if slug not in storage_collection.data:
-            _LOGGER.warning("Cannot delete '%s': variable does not exist", name)
+            # Idempotent no-op: deleting an absent variable is expected usage in
+            # cleanup sequences (e.g. blueprints clearing optional flags), not a
+            # fault. A WARNING here spammed the log 8x/day from the exhaust-fan
+            # blueprint's off-path.
+            _LOGGER.debug("delete: variable '%s' does not exist (no-op)", name)
             return
 
         await storage_collection.async_delete_item(slug)
@@ -374,15 +378,21 @@ class Variable(collection.CollectionEntity, RestoreEntity):
         new_state = self._format_state(new_value)
         if old_state == new_state:
             return
+        payload = {
+            "entity_id": self.entity_id,
+            "name": self.name,
+            "var_type": self._var_type,
+            "old_value": old_state,
+            "new_value": new_state,
+        }
+        self.hass.bus.async_fire(EVENT_VALUE_CHANGED, payload)
+        # Scoped variant: stated.value_changed.<slug>. Lets a consumer subscribe
+        # to ONE variable's changes. Needed because HA event triggers cannot
+        # filter event_data with templates, so a mode:restart automation
+        # listening on the global event gets restarted by every unrelated
+        # variable change — cancelling any in-flight wait it was running.
         self.hass.bus.async_fire(
-            EVENT_VALUE_CHANGED,
-            {
-                "entity_id": self.entity_id,
-                "name": self.name,
-                "var_type": self._var_type,
-                "old_value": old_state,
-                "new_value": new_state,
-            },
+            f"{EVENT_VALUE_CHANGED}.{self.entity_id.split('.', 1)[1]}", payload
         )
 
     def _format_state(self, value: Any) -> str | None:
